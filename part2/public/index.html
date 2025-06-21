@@ -9,21 +9,65 @@
 </head>
 <body class="bg-light">
 
-  <div id="app" class="container py-5">
-    <h1 class="mb-4 text-primary">{{ message }}</h1>
-    <p class="lead">Connect with trusted walkers for your beloved dog!</p>
+  <div id="app" class="container py-5" style="max-width: 500px;">
+    <h1 class="mb-4 text-primary text-center">Welcome to the Dog Walking Service!</h1>
 
-    <a href="owner-dashboard.html" class="btn btn-outline-primary me-2">Owner Dashboard</a>
-    <a href="walker-dashboard.html" class="btn btn-outline-success">Walker Dashboard</a>
+    <div class="mb-3">
+      <label for="email" class="form-label">Email</label>
+      <input v-model="email" type="email" class="form-control" id="email" placeholder="Enter your email">
+    </div>
+
+    <div class="mb-3">
+      <label for="password" class="form-label">Password</label>
+      <input v-model="password" type="password" class="form-control" id="password" placeholder="Enter your password">
+    </div>
+
+    <div class="d-grid gap-2">
+      <button @click="login" class="btn btn-primary">Log In</button>
+    </div>
+
+    <div v-if="error" class="alert alert-danger mt-3">{{ error }}</div>
   </div>
 
   <script>
     const { createApp } = Vue;
+
     createApp({
       data() {
         return {
-          message: 'Welcome to the Dog Walking Service!'
+          email: '',
+          password: '',
+          error: ''
         };
+      },
+      methods: {
+        async login() {
+          try {
+            const res = await fetch('/api/users/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: this.email, password: this.password })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+              this.error = data.error || 'Login failed';
+              return;
+            }
+
+            // Redirect based on role
+            if (data.user.role === 'owner') {
+              window.location.href = 'owner-dashboard.html';
+            } else if (data.user.role === 'walker') {
+              window.location.href = 'walker-dashboard.html';
+            } else {
+              this.error = 'Unknown role';
+            }
+          } catch (err) {
+            this.error = 'Something went wrong';
+          }
+        }
       }
     }).mount('#app');
   </script>
